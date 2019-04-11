@@ -105,7 +105,7 @@ class Game(tk.Tk):
 			if not action_command.target:
 				self.display_text_output('Where do you want to go?')
 
-			if action_command.target in ['n','e','w','s','north','east','west','south']:
+			elif action_command.target in ['n','e','w','s','north','east','west','south']:
 				if action_command.target == 'n':
 					action_command.target = 'north'
 				if action_command.target == 'e':
