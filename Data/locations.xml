@@ -40,7 +40,13 @@
 				<items>
 
 					<item>
-						<class_type>Stanget</class_type>
+						<item_class>Stanget</item_class>
+					</item>
+					<item>
+						<item_class>Stanget</item_class>
+					</item>
+					<item>
+						<item_class>Cremip</item_class>
 					</item>
 
 				</items>

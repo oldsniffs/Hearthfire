@@ -6,21 +6,27 @@
 		<foods>
 
 			<fish>
+<!-- 				<name>fish</name>
+				<plural_name>fish</plural_name> -->
 
 				<stanget readin='True'>
-					<name>River Stanget</name>
+					<name>river stanget</name>
+					<plural_name>river stangets</plural_name>
 					<description>A typical-looking freshwater fish. Average shape with brown and dark green scales. Large enough to provide a hearty meal for one person.</description>
 					<weight>5</weight>
 					<volume>5</volume>
 					<calories>650</calories>
+					<stackable>True</stackable>
 				</stanget>
 
-				<cremip>
-					<name>Cremip</name>
+				<cremip readin='True'>
+					<name>cremip</name>
+					<plural_name>cremips</plural_name>
 					<description>A small, slimy freshwater fish. Long and thin with silver scales. Rather small to eat.</description>
 					<weight>2</weight>
 					<volume>2</volume>
 					<calories>50</calories>
+					<stackable>True</stackable>
 				</cremip>
 
 			</fish>

@@ -50,13 +50,11 @@ class World:
 					for i in location[6]:
 						new_item_class = ''
 						new_item_dict = {}
+						print(i)
 						for e in i:
-							if e.tag == 'class_type':
-								new_item_class = e.text
-							else:
-								new_item_dict[e.tag] = e.text
+							new_item_dict[e.tag] = e.text
 								# Still need a line to e.text convert to appropriate digit
-						new_location_items.append(self.item_dict_to_item(new_item_class, new_item_dict))
+						new_location_items.append(self.create_new_item(new_item_dict))
 
 				self.map[new_zone_xy].map[new_location_xy] = Location(new_location_xy, new_location_zone, new_location_name, new_location_physical_description, new_location_distant_description, new_location_harvestables, new_location_interactables, new_location_items)
 
@@ -65,21 +63,20 @@ class World:
 			# for location in zone[4]:
 			# 	print(location[1].text)
 
-	def item_dict_to_item(self, item_class, item_dict):
+	def create_new_item(self, item_dict):
 		new_item_dict = item_dict # This copy might not be needed
 
+		new_item = eval('people.items.' + item_dict['item_class'] + '()')
 
-		new_item = eval('people.items.' + item_class + '()')
-
-		for key, value in new_item_dict:
+		for key, value in new_item_dict.items():
 			new_item.key = value
+
+		print(new_item.__dict__)
 
 		return new_item
 
 	def populate(self):
 		pass
-
-
 
 class Zone:
 	def __init__(self, xy, zone_type, name, description):
@@ -129,17 +126,47 @@ class Location:
 
 		return exits
 
-	def describe(self, target=None):
+	# This method can be reused to list items in any inventory style list
+	def describe(self, target=None): 
 
 		items = []
+		items_description = ''
 		for i in self.items:
-			# Add item detection check
-			items.append(i.name)
+			items.append(i)
+
+		if len(self.items)==1:
+			items_description = '\nThere is a ' + items[0].name + ' here.'
+		elif len(self.items) > 1: 
+			items_description = '\nThere are '
+			single_items = []
+			stackable_items = []
+			for i in items:
+				if i.stackable == True:
+					stackable_items.append(i)
+				else:
+					single_items.append(i)
+			for i in stackable_items:
+				count = 1
+				for i_duplicate in stackable_items:
+					if i.name == i_duplicate.name:
+						count += 1
+						stackable_items.remove(i_duplicate)
+				if len(stackable_items) + len(single_items) == 1:
+					items_description = items_description+' and '+count+' '+i.plural_name+' here.'
+				else:
+					items_description = items_description+count+' '+i.plural_name+', '
+				stackable_items.remove(i)
+			for i in single_items:
+				if len(single_items) == 0:
+					items_description = items_description+'and a '+i.name+' here.'
+				else:
+					items_description = items_description+'a '+i.name+', '
+
 		capitalized_exits = []
 		for e in self.get_exits():
 			capitalized_exits.append(e.capitalize())
 
-		best_description = self.zone.name + ', ' + self.name + ': ' + self.physical_description  + '\nAvailable exits: ' + ', '.join(capitalized_exits) + '.'
+		best_description = self.zone.name + ', ' + self.name + ': ' + self.physical_description  + items_description +'\nAvailable exits: ' + ', '.join(capitalized_exits) + '.'
 		return best_description
 
 class special_exit:
@@ -163,7 +190,7 @@ class Room: # Possible inheritance from Location
 def main_test():
 
 	world=World()
-	print(world.map[(10,10)].map[(6,5)].items)
+	print(world.map[(10,10)].map[(6,5)].describe())
 
 if __name__ == '__main__':
 	main_test()

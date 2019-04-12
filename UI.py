@@ -6,7 +6,7 @@ from tkinter import font as tkfont
 import sys
 import shelve
 
-import locations # includes import locations
+import locations
 
 
 class Game(tk.Tk):

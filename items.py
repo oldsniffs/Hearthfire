@@ -22,7 +22,7 @@ class Item:
 class Consumable(Item):
 	def __init__(self):
 		super().__init__()
-		self.calories = 0
+		#consumable have calories
 
 class Food(Consumable):
 	def __init__(self):
@@ -48,29 +48,24 @@ def readin_item_data(the_class, node):
 	for sc in the_class.__subclasses__():
 		for child in node:
 			if class_to_tag(sc) == child.tag:
-				# print(child.tag + ' matched. Attributes:', child.attrib)
 				if 'readin' in child.attrib:
-					# print('time to read in', sc.__name__, 'class variables')
-					for gc in child:
-						# print(gc.tag, gc.text)
-						setattr(sc, gc.tag, gc.text)
-
-
+					for attr_elem in child:
+						value = attr_elem.text
+						if attr_elem.text.isdigit() == False:
+							value = '\''+value+'\''
+						exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
+						# There is a drawback: These dynamically added vars aren't mapped to the item __dict__.  A custom mapping function could add them to a list if needed.
 				readin_item_data(sc, child)
-
 
 def class_to_tag(a_class):
 
 	class_name = a_class.__name__.lower()
 	no_change_for_plural = ['fish']
 
-	if a_class.__subclasses__() == []:
+	# Makes sure tags for classes without subs remain in singular form
+	if a_class.__subclasses__() == [] or class_name in no_change_for_plural:
 		return class_name
 
-	# Since a_class has subclasses, tag needs to be plural
-
-	if class_name in no_change_for_plural:
-		return class_name
 	else:
 		result = class_name + 's'
 
@@ -79,17 +74,17 @@ def class_to_tag(a_class):
 def class_var_from_element():
 	pass
 
+readin_item_data(Item, items_root)
 
 # Multiple inheritance like cookables and consumables?
 
 # ---- if __name__ == '__main__' ----
-readin_item_data(Item, items_root)
+
 if __name__ == '__main__':
 
-	readin_item_data(Item, items_root)
 	stanget = Stanget()
-	print(stanget.name)
-
+	print(stanget.__dict__)
+	vars(stanget)
 	# print(items_root)
 	# for child in items_root:
 	# 	print(child.tag, child.attrib)
