@@ -202,8 +202,6 @@ class Game(tk.Tk):
 			player_command.target = self.player.name
 
 
-		
-
 		return player_command
 
 		# Unhandled:
@@ -345,19 +343,16 @@ class MainMenu(tk.Frame):
 	def confirm_delete(self):
 		index = int(self.saved_games_list.curselection()[0])
 		delete_name = self.saved_games_list.get(index)
-
 		for file in locations.os.listdir(self.save_path):
 			if file[0:-4] == delete_name:
 				locations.os.remove(self.save_path+'/'+file)
-				self.destroy_load_game_menu_widgets()
-				self.create_load_game_menu_widgets()
-		
+					
 		self.delete_popup.destroy()
 		self.refresh_saved_games_list()
 
 	def show_game_info(self, event):
 
-		w = event.widget # try condensing w
+		w = event.widget
 		game_name = w.get(int(w.curselection()[0]))
 
 		d = shelve.open(self.save_path+'/'+game_name)

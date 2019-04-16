@@ -104,7 +104,7 @@ class Person():
 class Player(Person):
 
 	def __init__(self, game, name, location):
-		super().__init__(game, name, location)
+		super().__init__(game, name, location)  # Compare this to the Document_Selector object from QTracker and look up what's going on with super()
 
 	def show_location(self):
 		current_location = 'You are at ' + self.location.zone.name + ', ' + self.location.name + '.'

@@ -169,6 +169,7 @@ class Location:
 		best_description = self.zone.name + ', ' + self.name + ': ' + self.physical_description  + items_description +'\nAvailable exits: ' + ', '.join(capitalized_exits) + '.'
 		return best_description
 
+
 class special_exit:
 	def __init__(self):
 		pass
