@@ -58,9 +58,10 @@ def readin_item_data(the_class, node):
 				readin_item_data(sc, child)
 
 def class_to_tag(a_class):
+	# Fix this method to account for new plural name attribute
 
 	class_name = a_class.__name__.lower()
-	no_change_for_plural = ['fish']
+	no_change_for_plural = ['fish'] 
 
 	# Makes sure tags for classes without subs remain in singular form
 	if a_class.__subclasses__() == [] or class_name in no_change_for_plural:

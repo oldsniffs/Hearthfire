@@ -37,11 +37,11 @@ class World:
 				new_location_items = []
 				# This could be done as a loop
 				if location[4].text == None:
-					new_location_harvestables = ''
+					new_location_harvestables = []
 				else:
 					new_location_harvestables = location[4].text.split(',')
 				if location[5].text == None:
-					new_location_interactables = ''
+					new_location_interactables = []
 				else:
 					new_location_interactables = location[5].text.split()
 				if location[6].text == None:
@@ -54,7 +54,7 @@ class World:
 						for e in i:
 							new_item_dict[e.tag] = e.text
 								# Still need a line to e.text convert to appropriate digit
-						new_location_items.append(self.create_new_item(new_item_dict))
+						new_location_items.append(self.place_item(new_item_dict))
 
 				self.map[new_zone_xy].map[new_location_xy] = Location(new_location_xy, new_location_zone, new_location_name, new_location_physical_description, new_location_distant_description, new_location_harvestables, new_location_interactables, new_location_items)
 
@@ -63,7 +63,7 @@ class World:
 			# for location in zone[4]:
 			# 	print(location[1].text)
 
-	def create_new_item(self, item_dict):
+	def place_item(self, item_dict):
 		new_item_dict = item_dict # This copy might not be needed
 
 		new_item = eval('people.items.' + item_dict['item_class'] + '()')
@@ -129,38 +129,55 @@ class Location:
 	# This method can be reused to list items in any inventory style list
 	def describe(self, target=None): 
 
-		items = []
 		items_description = ''
-		for i in self.items:
-			items.append(i)
 
 		if len(self.items)==1:
 			items_description = '\nThere is a ' + items[0].name + ' here.'
 		elif len(self.items) > 1: 
 			items_description = '\nThere are '
+
+			# Sorts items into stacked and single
 			single_items = []
-			stackable_items = []
-			for i in items:
-				if i.stackable == True:
-					stackable_items.append(i)
+			stacked_items = {}
+			checked_list = []
+			for i in self.items:
+				print(i.stackable)
+				if i.name in checked_list:
+					continue
+				if i.stackable == 'True':
+					count = 1
+					for i_duplicate in self.items:
+						if i_duplicate != i and i.name == i_duplicate.name:
+							count += 1
+							checked_list.append(i.name)
+					if count == 1:
+						single_items.append(i.name)
+					if count > 1:
+						stacked_items[i.plural_name] = count
 				else:
-					single_items.append(i)
-			for i in stackable_items:
-				count = 1
-				for i_duplicate in stackable_items:
-					if i.name == i_duplicate.name:
-						count += 1
-						stackable_items.remove(i_duplicate)
-				if len(stackable_items) + len(single_items) == 1:
-					items_description = items_description+' and '+count+' '+i.plural_name+' here.'
+					single_items.append(i.name)
+
+			stacked_count = len(stacked_items)
+			single_count = len(single_items)
+
+			for i, q in stacked_items.items():
+				if stacked_count == 1 and single_count == 1: # If there were only 2 item listings, no comma needed
+					items_description = items_description + str(q) + ' ' + i + ' '
+				elif stacked_count > 1 or single_count != 0:
+					items_description = items_description + str(q) + ' ' + i+', '
 				else:
-					items_description = items_description+count+' '+i.plural_name+', '
-				stackable_items.remove(i)
+					items_description = items_description + 'and '+count+' '+i+' here.'
+				stacked_count -= 1
+				
 			for i in single_items:
-				if len(single_items) == 0:
-					items_description = items_description+'and a '+i.name+' here.'
+				if single_count == 2 and len(self.items == 2): # If there were only 2 item listings, no comma needed
+					items_description = items_description + 'a ' + i + ' '
+				if single_count > 1:
+					items_description = items_description + 'a ' + i + ', '
 				else:
-					items_description = items_description+'a '+i.name+', '
+					items_description = items_description + 'and a ' + i+' here.'
+				single_count -= 1
+
 
 		capitalized_exits = []
 		for e in self.get_exits():

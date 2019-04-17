@@ -21,7 +21,7 @@ class Person():
 		# self.skills = skills # Skill dict
 		# self.attributes = attributes # Attribute dict
 
-		self.inventory = {}
+		self.inventory = []
 
 
 		# Biometrics
@@ -65,6 +65,16 @@ class Person():
 
 # ---- Actions ----
 
+	def get_item(self, item, target=None):
+		if target==None:
+			self.inventory.append(item)
+			self.location.items.remove(item)
+
+		else:
+			self.inventory.append(item)
+			target.items.remove(item)
+
+
 	def eat(self, food):
 		pass
 
@@ -85,14 +95,15 @@ class Person():
 				self.personal_xy[1] -= 1
 			new_xy = tuple(self.personal_xy)
 			self.location = self.location.zone.map[new_xy]
-			# if type(self).__name__ == 'Player':
-			# 	self.game.display_text_output(self.location.describe())
 
 
 	# ---- Supporting methods ----
 
 	def add_to_denizens(self):
 		self.locations.denizens.append(self)
+
+	def get_inventory(self): # Check through bags
+		pass
 
 	def __getstate__(self):
 		state = self.__dict__.copy()
@@ -105,6 +116,7 @@ class Player(Person):
 
 	def __init__(self, game, name, location):
 		super().__init__(game, name, location)  # Compare this to the Document_Selector object from QTracker and look up what's going on with super()
+		self.inventory = []
 
 	def show_location(self):
 		current_location = 'You are at ' + self.location.zone.name + ', ' + self.location.name + '.'
@@ -113,16 +125,5 @@ class Player(Person):
 
 # ---- if __name__ == '__main__' ----
 
-def test_print():
-	world = locations.World()
-	player = Player('the game attribute','me', world.map[(10,10)].map[(5,5)])
-	print(player.show_location())
-	player.move(direction='w')
-	print(player.show_location())
-	print(player.__dict__)
-
-def test_fiat():
-	print('You are at Kembra, Village Square')
-
 if __name__ == '__main__':
-	test_print()
+	pass
