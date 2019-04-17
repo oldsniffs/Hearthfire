@@ -50,11 +50,12 @@ def readin_item_data(the_class, node):
 			if class_to_tag(sc) == child.tag:
 				if 'readin' in child.attrib:
 					for attr_elem in child:
-						value = attr_elem.text
-						if attr_elem.text.isdigit() == False:
-							value = '\''+value+'\''
-						exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
-						# There is a drawback: These dynamically added vars aren't mapped to the item __dict__.  A custom mapping function could add them to a list if needed.
+						if attr_elem.tag not in [class_to_tag(ssc) for ssc in sc.__subclasses__()]:
+							value = attr_elem.text
+							if attr_elem.text.isdigit() == False:
+								value = '\''+value+'\''
+							exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
+							# There is a drawback: These dynamically added vars aren't mapped to the item __dict__.  A custom mapping function could add them to a list if needed.
 				readin_item_data(sc, child)
 
 def class_to_tag(a_class):
@@ -83,9 +84,10 @@ readin_item_data(Item, items_root)
 
 if __name__ == '__main__':
 
+	a = Fish()
+	print(a.plural_name)
 	stanget = Stanget()
-	print(stanget.__dict__)
-	vars(stanget)
+	print(stanget.weight)
 	# print(items_root)
 	# for child in items_root:
 	# 	print(child.tag, child.attrib)
