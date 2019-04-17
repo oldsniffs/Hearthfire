@@ -66,6 +66,7 @@ class Person():
 # ---- Actions ----
 
 	def get_item(self, item, target=None):
+		# Needs to handle quantities: get stangets, get 2 stangets
 		if target==None:
 			self.inventory.append(item)
 			self.location.items.remove(item)

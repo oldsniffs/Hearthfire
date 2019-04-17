@@ -26,10 +26,6 @@ class Game(tk.Tk):
 
 		self.bind_game_keys()
 
-		# Setup swappable frames dictionary
-
-		self.swappable_frames = {}
-
 
 	# ---------- Text handling methods ------------
 
@@ -66,18 +62,13 @@ class Game(tk.Tk):
 		# else:
 		# 	print('no action_command object generated')
 
-		if not action_command:
-			return None
-
-		# Convert command attibute strings to objects
-		if action_command.target == self.player.name:
-			action_command.target = self.player
-
-		for p in self.player.location.denizens:
-			if action_command.target == p.name:
-				action_command.target = p	
-
 		# ---- Handle system commands ----
+
+
+		# Special handlings
+		if action_command.verb in ['n','north','e','east','s','south','w','west']:
+			action_command.target = action_command.verb
+			action_command.verb = 'go'
 
 		if action_command.system_command:
 			if action_command.system_command == 'main menu':
@@ -94,11 +85,11 @@ class Game(tk.Tk):
 		if action_command.verb == 'look':
 			if not action_command.target:
 				self.display_text_output(self.player.location.describe())
+			else:
+				self.display_text_output(action_command.target.describe())
+
 			# Now check inventory, items in location, people in location, features in location, anything that can currently be looked at. Might need a function that returns a dictionary of names of these items matched to the object.
 			#if action_command.target in
-
-		elif action_command.verb == 'eat':
-			pass
 
 		elif action_command.verb == 'go':
 
@@ -123,23 +114,45 @@ class Game(tk.Tk):
 			elif action_command.target:
 				for es in action_command.subject.location.special_exits:
 					if action_command.target == es.name:
-						action_command.subject.move(exit=se)
+						action_command.subject.move(exit=es)
 
 			else:
 				self.display_text_output('I\'m not sure where you want to go.')
+
+			if action_command.subject == self.player:
+				self.display_text_output(self.player.location.describe())
+
+		# Player only verbs
+		elif action_command.verb == 'i' or 'inv' or 'inventory':
+			self.player.get_inventory()
+
+
+		# Subject verbs
+		elif action_command.verb == 'eat':
+			pass
+
+		elif action_command.verb == 'get' or 'take':
+			if action_command.direct_object:
+				action_command.subject.get_item(action_command.direct_object, target=action_command.target)
+			else:
+				action_command.subject.get_item(action_command.target)
+
+
 
 	def parse_player_action_command(self):
 
 		system_commands = ['main menu', 'pause', 'quit']
 		
 		# If verb lists gets very large, possibly make them global so they are not constantly destroyed and recreated
-		world_verbs = ['look', 'go', 'n', 'e', 'w', 's']
-		player_verbs = ['eat', ' drink'] # Player acts on self
+		player_only_verbs = ['i', 'inv', 'inventory']
+		world_verbs = ['look', 'go', 'n', 'north', 'e', 'east', 'w', 'west', 's', 'south']
+		subject_verbs = ['eat', ' drink'] # Subject acts on self
 		social_verbs = ['talk', 'shop', 'buy', 'sell', 'give'] # Involves other people
-		item_verbs = ['get', 'drop']
-		verblist = world_verbs + player_verbs + social_verbs + item_verbs
+		item_verbs = ['get', 'take', 'drop']
+		verblist = world_verbs + subject_verbs + social_verbs + item_verbs
 
-		player_command = PlayerCommand(self)
+		player_command = ActionCommand(self)
+		player_command.subject = self.player
 
 		player_input = self.get_player_input()
 		self.display_text_output(player_input, command_readback=True)
@@ -158,6 +171,10 @@ class Game(tk.Tk):
 			return None
 
 		# ---- Begin parse ----
+
+		for p in self.player.location.denizens:
+			if action_command.target == p.name:
+				action_command.target = p
 
 		# If 1 word, it's just a verb
 		# If 2 words it's a verb and a target
@@ -197,10 +214,25 @@ class Game(tk.Tk):
 				player_command.direct_object = words[words.index('to')-1]
 			player_command.target = words[words.index('to')+1]
 
-		# Verb grouping defaults
-		if player_command.verb in player_verbs:
-			player_command.target = self.player.name
+		# Handle getting item from a container, interactable's container, stealing
+		if 'from' in words:
+			if player_command.verb == 'get' or 'take': # Verbs that require DO
+				player_command.direct_object = words[words.index('from')-1]
+			player_command.target = words[words.index('from')+1]
 
+		# Verb grouping defaults
+		if player_command.verb in subject_verbs:
+			player_command.target = self.player
+
+		# Before returning command, make sure target is valid
+
+		present_stuff = self.player.inventory + self.player.location.items + self.player.location.special_exits + self.player.location.denizens + self.player.location.harvestables + self.player.location.interactables
+		for ps in present_stuff:
+			if player_command.target == ps.name:
+				player_command.target = ps
+			else:
+				self.display_text_output('I can not find "'+ player_command.target + '" here.')
+				return None
 
 		return player_command
 
@@ -565,12 +597,12 @@ class OutputText(tk.Text):
 			self.tag_add(tag, 'matchStart', 'matchEnd')
 
 
-class PlayerCommand:
+class ActionCommand:
 	def __init__(self, controller): # Add subject assignment
-		self.subject = controller.player
-		self.verb = ''
-		self.target = ''
-		self.direct_object = ''
+		self.subject = None
+		self.verb = None
+		self.target = None
+		self.direct_object = None
 		self.quantity = 0
 		self.system_command = None
 		self.controller = controller

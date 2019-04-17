@@ -59,10 +59,6 @@ class World:
 				self.map[new_zone_xy].map[new_location_xy] = Location(new_location_xy, new_location_zone, new_location_name, new_location_physical_description, new_location_distant_description, new_location_harvestables, new_location_interactables, new_location_items)
 
 
-			# This cycles through names of locations in the zone
-			# for location in zone[4]:
-			# 	print(location[1].text)
-
 	def place_item(self, item_dict):
 		new_item_dict = item_dict # This copy might not be needed
 
@@ -136,46 +132,59 @@ class Location:
 		elif len(self.items) > 1: 
 			items_description = '\nThere are '
 
-			# Sorts items into stacked and single
+			# Sorts items into stacks, grouped, and single
 			single_items = []
-			stacked_items = {}
+			grouped_items = {}
 			checked_list = []
 			for i in self.items:
-				print(i.stackable)
 				if i.name in checked_list:
 					continue
-				if i.stackable == 'True':
+				if i.grouping == 'normal':
 					count = 1
 					for i_duplicate in self.items:
 						if i_duplicate != i and i.name == i_duplicate.name:
 							count += 1
 							checked_list.append(i.name)
-					if count == 1:
-						single_items.append(i.name)
-					if count > 1:
-						stacked_items[i.plural_name] = count
-				else:
-					single_items.append(i.name)
 
-			stacked_count = len(stacked_items)
+					if count == 1:
+						single_items.append(i)
+					if count > 1:
+						grouped_items[i.plural_name] = count
+
+				elif i.grouping == 'stack':
+					single_items.append(i)
+
+				else:
+					single_items.append(i)
+
+			grouped_count = len(grouped_items)
 			single_count = len(single_items)
 
-			for i, q in stacked_items.items():
-				if stacked_count == 1 and single_count == 1: # If there were only 2 item listings, no comma needed
+			for i, q in grouped_items.items():
+				if grouped_count == 1 and single_count == 1: # If there were only 2 item listings, no comma needed
 					items_description = items_description + str(q) + ' ' + i + ' '
-				elif stacked_count > 1 or single_count != 0:
+				elif grouped_count > 1 or single_count != 0:
 					items_description = items_description + str(q) + ' ' + i+', '
 				else:
 					items_description = items_description + 'and '+count+' '+i+' here.'
-				stacked_count -= 1
+				grouped_count -= 1
 				
 			for i in single_items:
-				if single_count == 2 and len(self.items == 2): # If there were only 2 item listings, no comma needed
-					items_description = items_description + 'a ' + i + ' '
+				if single_count == 2 and len(self.items) == 2: # If there were only 2 item listings, no comma needed
+					if i.grouping == 'stack':
+						items_description = items_description + 'a ' +i.stack_name+' of '+i.plural_name+' '
+					else:
+						items_description = items_description + 'a ' + i.name + ' '
 				if single_count > 1:
-					items_description = items_description + 'a ' + i + ', '
+					if i.grouping == 'stack':
+						items_description = items_description + 'a '+i.stack_name+' of '+i.plural_name+', '
+					else:
+						items_description = items_description + 'a ' + i.name + ', '
 				else:
-					items_description = items_description + 'and a ' + i+' here.'
+					if i.grouping == 'stack':
+						items_description = items_description+'and a '+i.stack_name+' of '+i.plural_name+' here.'
+					else:
+						items_description = items_description + 'and a ' + i.name+' here.'
 				single_count -= 1
 
 

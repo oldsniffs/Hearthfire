@@ -48,6 +48,10 @@
 					<item>
 						<item_class>Cremip</item_class>
 					</item>
+					<item>
+						<item_class>Arrow</item_class>
+						<quantity>100</quantity>
+					</item>
 
 				</items>
 				<buildings>granno_hut</buildings>
@@ -61,7 +65,11 @@
 				<distant_description>You see the village square and the main hall.</distant_description>
 				<harvestables></harvestables>
 				<interactables></interactables>
-				<items></items>
+				<items>
+					<item>
+						<item_class>Cremip</item_class>
+					</item>
+				</items>
 				<buildings>village hall</buildings>
 				<exits></exits>
 			</location>

@@ -22,7 +22,6 @@ class Item:
 class Consumable(Item):
 	def __init__(self):
 		super().__init__()
-		#consumable have calories
 
 class Food(Consumable):
 	def __init__(self):
@@ -42,6 +41,15 @@ class Cremip(Fish):
 	def __init__(self):
 		super().__init__()
 
+class Weapon(Item):
+	def __init__(self):
+		super().__init__()
+
+class Arrow(Weapon):
+	def __init__(self):
+		super().__init__()
+		self.quantity=1
+
 
 # Checks each subclass for readin attribute. If present, starts reading in data.
 def readin_item_data(the_class, node):
@@ -52,9 +60,13 @@ def readin_item_data(the_class, node):
 					for attr_elem in child:
 						if attr_elem.tag not in [class_to_tag(ssc) for ssc in sc.__subclasses__()]:
 							value = attr_elem.text
+							print(attr_elem.tag, value)
+							if not attr_elem.text:
+								continue
 							if attr_elem.text.isdigit() == False:
 								value = '\''+value+'\''
-							exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
+							exec(sc.__name__+'.'+attr_elem.tag+' ='+value)
+							# exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
 							# There is a drawback: These dynamically added vars aren't mapped to the item __dict__.  A custom mapping function could add them to a list if needed.
 				readin_item_data(sc, child)
 
@@ -84,10 +96,9 @@ readin_item_data(Item, items_root)
 
 if __name__ == '__main__':
 
-	a = Fish()
-	print(a.plural_name)
-	stanget = Stanget()
-	print(stanget.weight)
+	a = Arrow()
+
+
 	# print(items_root)
 	# for child in items_root:
 	# 	print(child.tag, child.attrib)
