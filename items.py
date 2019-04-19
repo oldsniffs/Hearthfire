@@ -60,18 +60,18 @@ def readin_item_data(the_class, node):
 					for attr_elem in child:
 						if attr_elem.tag not in [class_to_tag(ssc) for ssc in sc.__subclasses__()]:
 							value = attr_elem.text
-							print(attr_elem.tag, value)
+							# print(attr_elem.tag, value)
 							if not attr_elem.text:
 								continue
 							if attr_elem.text.isdigit() == False:
 								value = '\''+value+'\''
 							exec(sc.__name__+'.'+attr_elem.tag+' ='+value)
+							# This line used to be in place above, but I don't remember why I had been using property. Doesn't seem needed
 							# exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
 							# There is a drawback: These dynamically added vars aren't mapped to the item __dict__.  A custom mapping function could add them to a list if needed.
 				readin_item_data(sc, child)
 
 def class_to_tag(a_class):
-	# Fix this method to account for new plural name attribute
 
 	class_name = a_class.__name__.lower()
 	no_change_for_plural = ['fish'] 
@@ -96,7 +96,7 @@ readin_item_data(Item, items_root)
 
 if __name__ == '__main__':
 
-	a = Arrow()
+	print(Arrow.__subclasses__())
 
 
 	# print(items_root)

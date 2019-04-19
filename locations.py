@@ -48,9 +48,8 @@ class World:
 					new_location_items = []
 				else:
 					for i in location[6]:
-						new_item_class = ''
 						new_item_dict = {}
-						print(i)
+						
 						for e in i:
 							new_item_dict[e.tag] = e.text
 								# Still need a line to e.text convert to appropriate digit
@@ -63,12 +62,13 @@ class World:
 		new_item_dict = item_dict # This copy might not be needed
 
 		new_item = eval('people.items.' + item_dict['item_class'] + '()')
+		del new_item_dict['item_class']
 
 		for key, value in new_item_dict.items():
-			new_item.key = value
 
-		print(new_item.__dict__)
+			exec('new_item.'+key+' = '+value)
 
+		
 		return new_item
 
 	def populate(self):
@@ -128,7 +128,7 @@ class Location:
 		items_description = ''
 
 		if len(self.items)==1:
-			items_description = '\nThere is a ' + items[0].name + ' here.'
+			items_description = '\nThere is a ' + self.items[0].name + ' here.'
 		elif len(self.items) > 1: 
 			items_description = '\nThere are '
 
@@ -182,7 +182,7 @@ class Location:
 						items_description = items_description + 'a ' + i.name + ', '
 				else:
 					if i.grouping == 'stack':
-						items_description = items_description+'and a '+i.stack_name+' of '+i.plural_name+' here.'
+						items_description = items_description+'and a '+i.stack_name+' of '+str(i.quantity)+' '+i.plural_name+' here.'
 					else:
 						items_description = items_description + 'and a ' + i.name+' here.'
 				single_count -= 1
@@ -214,10 +214,7 @@ class Room: # Possible inheritance from Location
 
 # ---- Testing functions ----
 
-def main_test():
-
-	world=World()
-	print(world.map[(10,10)].map[(6,5)].describe())
 
 if __name__ == '__main__':
-	main_test()
+	world=World()
+	print(world.map[(10,10)].map[(6,5)].describe())

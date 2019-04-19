@@ -65,7 +65,7 @@ class Person():
 
 # ---- Actions ----
 
-	def get_item(self, item, target=None):
+	def get_item(self, item, target=None): # Needs source argument for containers, people, not just taking from location items
 		# Needs to handle quantities: get stangets, get 2 stangets
 		if target==None:
 			self.inventory.append(item)
@@ -104,7 +104,72 @@ class Person():
 		self.locations.denizens.append(self)
 
 	def get_inventory(self): # Check through bags
-		pass
+
+		items_description = ''
+
+		if len(self.inventory)==1:
+			items_description = 'There is a ' + self.inventory[0].name + ' here.'
+		elif len(self.inventory) > 1: 
+			items_description = 'There are '
+
+			# Sorts items into stacks, grouped, and single
+			single_items = []
+			grouped_items = {}
+			checked_list = []
+			for i in self.inventory:
+				if i.name in checked_list:
+					continue
+				if i.grouping == 'normal':
+					count = 1
+					for i_duplicate in self.inventory:
+						if i_duplicate != i and i.name == i_duplicate.name:
+							count += 1
+							checked_list.append(i.name)
+
+					if count == 1:
+						single_items.append(i)
+					if count > 1:
+						grouped_items[i.plural_name] = count
+
+				elif i.grouping == 'stack':
+					single_items.append(i)
+
+				else:
+					single_items.append(i)
+
+			grouped_count = len(grouped_items)
+			single_count = len(single_items)
+
+			for i, q in grouped_items.items():
+				if grouped_count == 1 and single_count == 1: # If there were only 2 item listings, no comma needed
+					items_description = items_description + str(q) + ' ' + i + ' '
+				elif grouped_count > 1 or single_count != 0:
+					items_description = items_description + str(q) + ' ' + i+', '
+				elif grouped_count == 1:
+					items_description = items_description+str(count)+' '+i+' here'
+				else:
+					items_description = items_description + 'and '+str(count)+' '+i+' here.'
+				grouped_count -= 1
+				
+			for i in single_items:
+				if single_count == 2 and len(self.inventory) == 2: # If there were only 2 item listings, no comma needed
+					if i.grouping == 'stack':
+						items_description = items_description + 'a ' +i.stack_name+' of '+i.plural_name+' '
+					else:
+						items_description = items_description + 'a ' + i.name + ' '
+				if single_count > 1:
+					if i.grouping == 'stack':
+						items_description = items_description + 'a '+i.stack_name+' of '+i.plural_name+', '
+					else:
+						items_description = items_description + 'a ' + i.name + ', '
+				else:
+					if i.grouping == 'stack':
+						items_description = items_description+'and a '+i.stack_name+' of '+str(i.quantity)+' '+i.plural_name+' here.'
+					else:
+						items_description = items_description + 'and a ' + i.name+' here.'
+				single_count -= 1
+
+		return items_description
 
 	def __getstate__(self):
 		state = self.__dict__.copy()
@@ -117,7 +182,7 @@ class Player(Person):
 
 	def __init__(self, game, name, location):
 		super().__init__(game, name, location)  # Compare this to the Document_Selector object from QTracker and look up what's going on with super()
-		self.inventory = []
+		self.inventory = [items.Stanget()]
 
 	def show_location(self):
 		current_location = 'You are at ' + self.location.zone.name + ', ' + self.location.name + '.'
