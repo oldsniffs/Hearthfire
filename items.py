@@ -6,6 +6,10 @@ items_xml = os.path.join(base_path, 'data\\items.xml')
 items_parse = et.parse(items_xml)
 items_root = items_parse.getroot()
 
+# Might only use one of these in the end
+all_terminal_items = []
+all_item_names = []
+all_terminal_item_names = []
 
 class Item:
 
@@ -52,13 +56,15 @@ class Arrow(Weapon):
 
 
 # Checks each subclass for readin attribute. If present, starts reading in data.
+# An alternative would be to get a list of all terminal subclasses, and match to xml trees by name.
 def readin_item_data(the_class, node):
+	# Does something extra: Adds name of each terminal class to list of all_item_names.
 	for sc in the_class.__subclasses__():
 		for child in node:
 			if class_to_tag(sc) == child.tag:
 				if 'readin' in child.attrib:
 					for attr_elem in child:
-						if attr_elem.tag not in [class_to_tag(ssc) for ssc in sc.__subclasses__()]:
+						if attr_elem.tag not in [class_to_tag(ssc) for ssc in sc.__subclasses__()]: # This means the tag does not relate to another subclass, and should be read in as an attribute.
 							value = attr_elem.text
 							# print(attr_elem.tag, value)
 							if not attr_elem.text:
@@ -70,6 +76,20 @@ def readin_item_data(the_class, node):
 							# exec(sc.__name__+'.'+attr_elem.tag+' = property(lambda self: '+value+')')
 							# There is a drawback: These dynamically added vars aren't mapped to the item __dict__.  A custom mapping function could add them to a list if needed.
 				readin_item_data(sc, child)
+		if 'name' in dir(sc):
+			all_item_names.append(sc.name)
+			if sc.plural_name not in all_item_names:
+				print(sc.plural_name+' not in ', all_item_names, ' -adding now.')
+				all_item_names.append(sc.plural_name)
+			all_item_names.append(sc.plural_name)
+			if sc.__subclasses__() == []:
+				all_terminal_item_names.append(sc.name)
+				all_terminal_items.append(sc)
+				if sc.plural_name not in all_terminal_item_names:
+					print(sc.plural_name + ' not in ', all_terminal_item_names, ' -adding now')
+					all_terminal_item_names.append(sc.plural_name)
+
+
 
 def class_to_tag(a_class):
 
@@ -96,7 +116,8 @@ readin_item_data(Item, items_root)
 
 if __name__ == '__main__':
 
-	print(Arrow.__subclasses__())
+	print(all_item_names)
+	print(all_terminal_item_names)
 
 
 	# print(items_root)

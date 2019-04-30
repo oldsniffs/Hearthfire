@@ -9,7 +9,7 @@
 		<locations>
 
 			<location>
-				<xy>7,5</xy>
+				<xyz>7,5,0</xyz>
 				<name>Kembryna Riverbank</name>
 				<physical_description>The Kembryna River flows down from the mountains.</physical_description>
 				<distant_description>You see the Kembryna River</distant_description>
@@ -31,7 +31,7 @@
 			</location>
 
 			<location>
-				<xy>6,5</xy>
+				<xyz>6,5,0</xyz>
 				<name>East End</name>
 				<physical_description>One hut stands at the edge of the forest.</physical_description>
 				<distant_description>A hut stands at the edge of the forest.</distant_description>
@@ -59,7 +59,7 @@
 			</location>
 
 			<location>
-				<xy>5,5</xy>
+				<xyz>5,5,0</xyz>
 				<name>Village Square</name>
 				<physical_description>Here in the square, Kembra's soft dirt road leads into open entrance of the village hall. A few large flowery Eucalyptus trees adorn the scene around the hall, which is otherwise nearly swallowed by the tall grasses of the surrounding meadow. The road extends west and east to the rest of the village.</physical_description>
 				<distant_description>You see the village square and the main hall.</distant_description>
@@ -75,7 +75,7 @@
 			</location>
 
 			<location>
-				<xy>4,5</xy>
+				<xyz>4,5,0</xyz>
 				<name>West End</name>
 				<physical_description>Two small open huts stand at the edge of town.</physical_description>
 				<distant_description>Two small huts stand at the edge of town.</distant_description>
@@ -87,7 +87,7 @@
 			</location>
 
 			<location>
-				<xy>3,5</xy>
+				<xyz>3,5,0</xyz>
 				<name>Crivet's Stream</name>
 				<physical_description>(A stream) runs out of the mountains past the edge of the village.</physical_description>
 				<distant_description></distant_description>
@@ -106,7 +106,7 @@
 
 <!--
 			<location>
-				<xy></xy>
+				<xyz></xyz>
 				<name></name>
 				<physical_description></physical_description>
 				<distant_description></distant_description>

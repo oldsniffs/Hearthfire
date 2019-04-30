@@ -28,7 +28,7 @@ class World:
 
 			# Instantiate location objects from locations.xml
 			for location in zone[4]:
-				new_location_xy = eval('(' + location[0].text + ')')
+				new_location_xyz = eval('(' + location[0].text + ')')
 				new_location_zone = self.map[new_zone_xy]
 				new_location_name = location[1].text
 				new_location_physical_description = location[2].text
@@ -55,7 +55,7 @@ class World:
 								# Still need a line to e.text convert to appropriate digit
 						new_location_items.append(self.place_item(new_item_dict))
 
-				self.map[new_zone_xy].map[new_location_xy] = Location(new_location_xy, new_location_zone, new_location_name, new_location_physical_description, new_location_distant_description, new_location_harvestables, new_location_interactables, new_location_items)
+				self.map[new_zone_xy].map[new_location_xyz] = Location(new_location_xyz, new_location_zone, new_location_name, new_location_physical_description, new_location_distant_description, new_location_harvestables, new_location_interactables, new_location_items)
 
 
 	def place_item(self, item_dict):
@@ -75,8 +75,8 @@ class World:
 		pass
 
 class Zone:
-	def __init__(self, xy, zone_type, name, description):
-		self.xy = xy
+	def __init__(self, xyz, zone_type, name, description):
+		self.xyz = xyz
 		self.zone_type = zone_type
 		self.name = name
 		self.description = description
@@ -84,8 +84,8 @@ class Zone:
 
 
 class Location:
-	def __init__(self, xy, zone, name, physical_description, distant_description, harvestables, interactables, items):
-		self.xy = xy
+	def __init__(self, xyz, zone, name, physical_description, distant_description, harvestables, interactables, items):
+		self.xyz = xyz
 		self.zone = zone
 		self.name = name
 		# Denizens also have a current_location attribue so they know where they are
@@ -102,18 +102,18 @@ class Location:
 
 		exits = []
 
-		west_xy = (self.xy[0]-1, self.xy[1])
-		east_xy = (self.xy[0]+1, self.xy[1])
-		south_xy = (self.xy[0], self.xy[1]-1)
-		north_xy = (self.xy[0], self.xy[1]+1)
+		west_xyz = (self.xyz[0]-1, self.xyz[1], self.xyz[2])
+		east_xyz = (self.xyz[0]+1, self.xyz[1], self.xyz[2])
+		south_xyz = (self.xyz[0], self.xyz[1]-1, self.xyz[2])
+		north_xyz = (self.xyz[0], self.xyz[1]+1, self.xyz[2])
 
-		if west_xy in self.zone.map.keys():
+		if west_xyz in self.zone.map.keys():   # Checks should pass even with different z value. Z changes take skill to traverse
 			exits.append('west')
-		if east_xy in self.zone.map.keys():
+		if east_xyz in self.zone.map.keys():
 			exits.append('east')
-		if south_xy in self.zone.map.keys():
+		if south_xyz in self.zone.map.keys():
 			exits.append('south')
-		if north_xy in self.zone.map.keys():
+		if north_xyz in self.zone.map.keys():
 			exits.append('north')
 
 		for se in self.special_exits:
@@ -121,6 +121,12 @@ class Location:
 				exits.append(se.name)
 
 		return exits
+
+	def capitalize_exits(self):
+		capitalized_exits = []
+		for e in self.get_exits():
+			capitalized_exits.append(e.capitalize())
+		return capitalized_exits
 
 	# This method can be reused to list items in any inventory style list
 	def describe(self, target=None): 
@@ -187,12 +193,8 @@ class Location:
 						items_description = items_description + 'and a ' + i.name+' here.'
 				single_count -= 1
 
+		best_description = self.zone.name + ', ' + self.name + ': ' + self.physical_description  + items_description +'\nAvailable exits: ' + ', '.join(self.capitalize_exits()) + '.'
 
-		capitalized_exits = []
-		for e in self.get_exits():
-			capitalized_exits.append(e.capitalize())
-
-		best_description = self.zone.name + ', ' + self.name + ': ' + self.physical_description  + items_description +'\nAvailable exits: ' + ', '.join(capitalized_exits) + '.'
 		return best_description
 
 
@@ -217,4 +219,6 @@ class Room: # Possible inheritance from Location
 
 if __name__ == '__main__':
 	world=World()
-	print(world.map[(10,10)].map[(6,5)].describe())
+	for l in world.map[(10,10)].map:
+		print(l)
+	print(world.map[(10,10)].map[(5,5,0)].describe())

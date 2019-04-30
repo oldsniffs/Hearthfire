@@ -1,7 +1,110 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<people>
+<people> <!-- For python # p for p in people if p.tag == 'person' -->
 
-	<person>
+	<groups>
+		<group name="House"> <!--locations.py will attach player's name to "House"-->
+			<knowledge>
+				<basic>Your house...</basic>
+			</knowledge>
+			<members></members> <!---Members at the creation of world-->
+			<leader></leader>
+			<other_officers></other_officers>
+			<talk>
+				<talkset name="Basic">
+					<our_group></our_group>
+				</talkset>
+
+
+
+		</group>
+	</groups>
+
+	<person name="Bisk"> <!-- Bisk makes it back -->
+		<knowledge> <!--"about" as alternative to "knowledge"-->
+			<who_is>Bisk is your brother in %house.name%.</who_is>
+			<reputation>He has a reputation as being somewhat aloof at times, but also for being a strong fighter.</reputation>
+			<bio>Bisk was born into %house.name%. His parents are %parents.names%.</bio>
+		</knowledge>
+
+	</person>
+
+	<person name="Chantan">
+		<knowledge>
+			<who_is>Chantam is the leader of %house.name%.</who_is><!-- for deceased, could present participles be changed to past? To automate would depend on lists of verbs-->
+			<deceased>%name% died when you attacked by bandits.</deceased>
 		
 	</person>
+
+	<person name="Sembo"> <!--If proper nouns are used too much here, description function in person class can swap in some pronouns-->
+		<knowledge>
+			<who_is>Sembo was your brother in %house.name%.</who_is>
+			<!--<deceased></deceased> possibly inside who_is, or as name attribute of other who_is-->
+			<reputation>He is now regarded as among the most valued members of the house.</reputation>
+			<bio>Sembo came to %house.name% with his mother as a young child. He was always well liked and believed to be capable.</bio>
+
+		</knowledge>
+
+		<talk>
+			<busy>What? We can't talk now!</busy>
+			<angry></angry>
+		</talk>
+
+		<!--This is speculative of how an npc action sequence could be constructed.-->
+		<sequence name="Intro">
+			<marker name="E2">
+				<action></action>
+				<speak></speak>
+
+		</sequence>
+	</person>
+
+
+	<animals>
+
+		<cat>
+
+			<Old_Crumpers>
+				
+			</Old_Crumpers>
+
+			<Blue-fur>
+				
+			</Blue-fur>
+
+		</cat>
+
+	</animals>
+
+<!--
+
+	<person>
+		<name></name>
+		<physical_description></physical_description>
+		<height></height>
+		<weight></weight>
+		<factions>
+			<faction esteem=0></faction>
+
+
+Members is initialized members.
+
+<group name="House">
+			<knowledge>
+				<basic>Your house...</basic>
+			</knowledge>
+			<members></members>
+			<leader></leader>
+			<other_officers></other_officers>
+			<talksets>
+				<talkset name="Basic">
+					<our_group></our_group>
+					<hostile></hostile>
+				</talkset>
+				
+
+				</talkset>
+			</talksets>
+
+		</group>
+-->

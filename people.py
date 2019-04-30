@@ -1,22 +1,49 @@
 import items
 import random
 
+all_people = []
+all_people_names = []
+
+mb_weight = {
+	istf: 16.4,
+	estj: ,
+	istp: ,
+	isfj: ,
+	esfj: ,
+	esfp: ,
+	enfp: ,
+	estp:,
+	intp: ,
+	infp: ,
+	entp: ,
+	intj: 2.7,
+	entj: 1.6,
+	enfj: 1.2,
+
+}
+
+def random_mb():
+	mb =
+	return mb
+
 # What they spend their time doing. Might only want 1 per person
 class Vocation():
 	def __init__(self):
 		self.name = ''
 
 class Person():
-	def __init__(self, game, name='random', location='default'): # vocation, skills, attributes): # 
+	def __init__(self, game, name='random', faction='tbd', location='default'): # vocation, skills, attributes): # 
 
 		self.game = game
 		self.name = name
+		self.mb = 
+		all_people.append(self)
+		all_people_names.append(self.name)
 		self.location = location
 		# if location == 'default':
-		# 	self.location =  # Location class
+		# 	self.location =  self.faction.home
 		self.daily_calories = 0
-
-		self.personal_xy = list(self.location.xy)
+		self.personal_xyz = list(self.location.xyz)
 		# self.vocation = vocation # Vocation class
 		# self.skills = skills # Skill dict
 		# self.attributes = attributes # Attribute dict
@@ -34,6 +61,8 @@ class Person():
 		# else:
 		# 	self.readin_person()
 
+	def get_valid_targets(self): # Called by substantiate_command to convert command.target strings to objects
+		return self.location.items+self.location.denizens+self.inventory
 
 	def talk(self):
 		pass
@@ -87,15 +116,16 @@ class Person():
 		# Directional move action will need if statement in case a new zone is entered
 		elif direction != None:
 			if direction == 'north':
-				self.personal_xy[1] += 1
+				self.personal_xyz[1] += 1
 			if direction == 'east':
-				self.personal_xy[0] += 1
+				self.personal_xyz[0] += 1
 			if direction == 'west':
-				self.personal_xy[0] -= 1
+				self.personal_xyz[0] -= 1
 			if direction == 'south':
-				self.personal_xy[1] -= 1
-			new_xy = tuple(self.personal_xy)
-			self.location = self.location.zone.map[new_xy]
+				self.personal_xyz[1] -= 1
+			new_xyz = tuple(self.personal_xyz)
+			self.location = self.location.zone.map[new_xyz]
+			# TODO: Update denizen lists here
 
 
 	# ---- Supporting methods ----
@@ -181,7 +211,8 @@ class Person():
 class Player(Person):
 
 	def __init__(self, game, name, location):
-		super().__init__(game, name, location)  # Compare this to the Document_Selector object from QTracker and look up what's going on with super()
+		self.location = location
+		super().__init__(game, name, location=self.location)
 		self.inventory = [items.Stanget()]
 
 	def show_location(self):

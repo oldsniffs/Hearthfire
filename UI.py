@@ -4,15 +4,16 @@
 import tkinter as tk
 from tkinter import font as tkfont
 import sys
-import shelve
+import random
 
-import locations
-
+import menu
+menu.locations
 
 class Game(tk.Tk):
 	def __init__(self, *args, **kwargs):
 		super().__init__(*args, **kwargs)
 
+		self.title('Hearthfire')
 		self.geometry('1500x800')
 		self.config(background='black')
 
@@ -22,16 +23,30 @@ class Game(tk.Tk):
 		self.game_screen = GameScreen(self)
 		self.game_screen.grid(row=0, column=0)
 
+		self.system_commands = ['main menu', 'pause', 'quit']
+		self.player_only_verbs = ['i', 'inv', 'inventory', 'friends']
+		self.world_verbs = ['look', 'go', 'n', 'north', 'e', 'east', 'w', 'west', 's', 'south']
+		self.subject_verbs = ['eat', ' drink'] # Subject acts on self
+		self.social_verbs = ['talk', 'shop', 'buy', 'sell', 'give'] # Involves other people
+		self.item_verbs = ['get', 'take', 'drop']
+		self.verblist = self.world_verbs + self.subject_verbs + self.social_verbs + self.item_verbs + self.player_only_verbs
+
+		# This is a dynamic variable that may need to be updated
+		self.all_valid_targets = present_valid_targets + menu.locations.people.all_people + menu.locations.people.items.all_terminal_items
+
 		self.game_screen.player_input.focus_force()
 
 		self.bind_game_keys()
 
 
+
 	# ---------- Text handling methods ------------
+	def random_color(self):
+		colors = ['red','orange-red','dark-turquoise','light-turquoise','cocoa''vanilla','overcast','light-mudfish','muted-purple','light-brown','light-salmon','red','mudfish']
+		return colors[random.randint(0, len(colors)-1)]
 
-	def display_text_output(self, text, command_readback = False):
-
-		self.game_screen.text_output.configure(state='normal')
+	def display_text_output(self, text, pattern1=None, tag1=None, pattern2=None, tag2=None, command_readback = False, tagging='default'):
+		# TODO: the color tag checker is reviewing all text each time text is displayed. It is changing previous tags (I think the order is based tag declaration order) and redoing all previous work each time.
 
 		if command_readback == True:
 			text = text + '\n'
@@ -39,36 +54,55 @@ class Game(tk.Tk):
 		else:
 			text = text + '\n> '
 
+		self.game_screen.text_output.configure(state='normal')
 		self.game_screen.text_output.insert('end', text)
-		self.game_screen.text_output.configure(state='disabled')
+		
+		if tagging == 'default':
+			# TODO: I'd like a good way to not apply colors to 'story' type text, such as the meat of a look description, or a conversation. I feel the colors disrupt the reading flow.
+			# Possibly execute look, talk, could grab sections of the description.
+			# Possibly a regex match here could direct tag application. That seems vulnerable to later conflicts.
 
+			self.game_screen.text_output.apply_tag_to_pattern(self.player.location.name, 'dark-turquoise')
+			self.game_screen.text_output.apply_tag_to_pattern(self.player.location.zone.name, 'dark-turquoise')
+
+			for exit in self.player.location.capitalize_exits():
+				self.game_screen.text_output.apply_tag_to_pattern(exit, 'dark-turquoise')
+			for i_n in self.player.location.items:
+				self.game_screen.text_output.apply_tag_to_pattern(i_n.name, 'salmon')
+
+		self.game_screen.text_output.configure(state='disabled')
 		self.game_screen.text_output.see('end')
 
 # ---- Keybound functions ----
 	def execute_player_command(self, event):
+		# Does 1 thing: when <return> is pressed, sends player input to parse_player_action_command. If valid command is returned, sends it to execute_command
 		player_action_command = self.parse_player_action_command()
-		self.execute_command(player_action_command)
+		if player_action_command != None:
+			self.execute_command(player_action_command)
+
+	def escape_main_menu(self, event):
+		self.main_menu()	
 
 # ---- Command Processing ----
 
 	def execute_command(self, action_command):
 
+		# If subject is an npc and player is present, a display message may be needed to describe events to player.
+		player_present = False
+		if action_command.subject != self.player and action_command.subject.location == self.player.location:
+			player_present = True
+
 		# if action_command:
 		# 	print('verb: ' + action_command.verb)
 		# 	print('target: ' + action_command.target)
-		# 	print('IO: ' + action_command.direct_object)
+		# 	print('DO: ' + action_command.direct_object)
 		# 	print('quantity: ' + str(action_command.quantity))
 		# 	print(action_command.system_command)
 		# else:
 		# 	print('no action_command object generated')
 
+
 		# ---- Handle system commands ----
-
-
-		# Special handlings
-		if action_command.verb in ['n','north','e','east','s','south','w','west']:
-			action_command.target = action_command.verb
-			action_command.verb = 'go'
 
 		if action_command.system_command:
 			if action_command.system_command == 'main menu':
@@ -79,17 +113,15 @@ class Game(tk.Tk):
 			if action_command.system_command == 'pause':
 				pass
 
-
 		# ---- Handle Verbs ----
 
 		if action_command.verb == 'look':
+			# TODO: Include visible nearby locations in present list, and let player look at locations they can currently see.
 			if not action_command.target:
 				self.display_text_output(self.player.location.describe())
 			else:
 				self.display_text_output(action_command.target.describe())
 
-			# Now check inventory, items in location, people in location, features in location, anything that can currently be looked at. Might need a function that returns a dictionary of names of these items matched to the object.
-			#if action_command.target in
 
 		elif action_command.verb == 'go':
 
@@ -99,11 +131,11 @@ class Game(tk.Tk):
 			elif action_command.target in ['n','e','w','s','north','east','west','south']:
 				if action_command.target == 'n':
 					action_command.target = 'north'
-				if action_command.target == 'e':
+				elif action_command.target == 'e':
 					action_command.target = 'east'
-				if action_command.target == 'w':
+				elif action_command.target == 'w':
 					action_command.target = 'west'
-				if action_command.target == 's':
+				elif action_command.target == 's':
 					action_command.target = 'south'
 
 				if action_command.target in action_command.subject.location.get_exits():
@@ -137,47 +169,37 @@ class Game(tk.Tk):
 			else:
 				action_command.subject.get_item(action_command.target)
 
-
-
 	def parse_player_action_command(self):
-
-		system_commands = ['main menu', 'pause', 'quit']
-		
-		# If verb lists gets very large, possibly make them global so they are not constantly destroyed and recreated
-		player_only_verbs = ['i', 'inv', 'inventory']
-		world_verbs = ['look', 'go', 'n', 'north', 'e', 'east', 'w', 'west', 's', 'south']
-		subject_verbs = ['eat', ' drink'] # Subject acts on self
-		social_verbs = ['talk', 'shop', 'buy', 'sell', 'give'] # Involves other people
-		item_verbs = ['get', 'take', 'drop']
-		verblist = world_verbs + subject_verbs + social_verbs + item_verbs
+		# Does 1 thing: builds a command object with strings from player input
 
 		player_command = ActionCommand(self)
 		player_command.subject = self.player
 
 		player_input = self.get_player_input()
 		self.display_text_output(player_input, command_readback=True)
-		words = player_input.split()
 
-		if player_input in system_commands:
+		if player_input in self.system_commands:
 			player_command.system_command = player_input
 			return player_command
+
+		words = player_input.split()
 
 		if len(words) == 0:
 			self.display_text_output('Please enter something.')
 			return None
  
-		if words[0] not in verblist:
-			self.display_text_output('I don\'t understand what you\'re trying to do')
-			return None
+ 		# ---- Clean user's input:
+
+		words = [w for w in words if w not in ['the','The']]
+
+		self.combine_2_word_terms(words)
+		print(words)
 
 		# ---- Begin parse ----
 
-		for p in self.player.location.denizens:
-			if action_command.target == p.name:
-				action_command.target = p
-
-		# If 1 word, it's just a verb
-		# If 2 words it's a verb and a target
+		if words[0] not in self.verblist:
+			self.display_text_output('I don\'t even know what {}ing is!'.format(words[0]))
+			return None
 
 		player_command.verb = words[0]
 
@@ -187,12 +209,13 @@ class Game(tk.Tk):
 
 		if len(words) == 2:
 			player_command.target = words[1]
+			print(player_command.target)
 
 		# Quantity
 		for w in words:
 			if w.isdigit():
 				# -- checks --
-				# ensure DO follows
+				# ensure number is not last word
 				if words.index(w) == len(words)-1:
 					self.display_text_output(player_command.verb + ' ' + w + ' of what?')
 					return None
@@ -202,7 +225,7 @@ class Game(tk.Tk):
 					return None
 				player_command.quantity = w
 
-		# Sentence flow words
+		# Prepositions
 		if 'for' in words:
 			player_command.indirect_object = words[words.index('for')+1]
 
@@ -221,12 +244,13 @@ class Game(tk.Tk):
 			player_command.target = words[words.index('from')+1]
 
 		# Verb grouping defaults
-		if player_command.verb in subject_verbs:
+		if player_command.verb in self.subject_verbs:
 			player_command.target = self.player
 
-		# Before returning command, make sure target is valid
 
+		
 		present_stuff = self.player.inventory + self.player.location.items + self.player.location.special_exits + self.player.location.denizens + self.player.location.harvestables + self.player.location.interactables
+		print(player_command.target)
 		for ps in present_stuff:
 			if player_command.target == ps.name:
 				player_command.target = ps
@@ -234,11 +258,32 @@ class Game(tk.Tk):
 				self.display_text_output('I can not find "'+ player_command.target + '" here.')
 				return None
 
+		print('verb:',player_command.verb)
+		print('target:',player_command.target)
+
+		self.substantiate_command(player_command)
+		self.reassign_if_move_direction(player_command)
+
+		print(player_command.target)
 		return player_command
 
-		# Unhandled:
-		# Under, In, as in "look under bed". A position attribute for the items "under" the bed or "in" the drawer?	
-		# From, as in "drink from fountain"
+
+
+	def reassign_if_move_direction(self, action_command):
+
+		if action_command.verb in ['n','north','e','east','s','south','w','west']:
+			action_command.target = action_command.verb
+			action_command.verb = 'go'
+
+	def substantiate_command(self, action_command):
+		# 1 thing: Confirms .target (and DO if there is one) exists, and reassign corresponding object in place of the string value.
+		# If targets don't exist, or exist but are not present, values will be strings "not present" or "not exist"
+		# Some verbs can target something present in the location. Some, like info, can target many things not present.
+		# Verb lists direct attribute assignments.
+		# No display messages in this function, that is the purview of execute.
+		present_valid_targets = self.player.location.items + self.player.location.denizens + self.player.location.harvestables + self.player.location.interactables
+
+
 
 	def get_player_input(self):
 
@@ -247,6 +292,17 @@ class Game(tk.Tk):
 
 		return player_input_text
 
+
+# ---- Utility methods ----
+
+	def combine_2_word_terms(self, a_list): # Could be expanded to combine more than 2 terms.
+		count = 0
+		while count < len(a_list)-1:
+			print (' '.join((a_list[count], a_list[count+1])))
+			if ' '.join((a_list[count], a_list[count+1])) in menu.locations.people.items.all_terminal_item_names+menu.locations.people.all_people_names+self.verblist:
+				a_list[count] = ' '.join((a_list[count], a_list[count+1]))
+				del a_list[count+1]
+			count += 1
 
 # ---- Game system methods ----
 
@@ -263,12 +319,8 @@ class Game(tk.Tk):
 
 	def main_menu(self):
 		self.unbind_game_keys()
-		self.menu = MainMenu(self)
+		self.menu = menu.MainMenu(self)
 		self.menu.grid(row=0, column=0, rowspan=3, columnspan=5, sticky='nsew')
-
-	def escape_main_menu(self, event):
-		
-		self.main_menu()
 
 	def start(self):
 		self.main_menu()
@@ -278,241 +330,7 @@ class Game(tk.Tk):
 		self.destroy()
 
 
-class MainMenu(tk.Frame):
 
-	def __init__(self, parent):
-		tk.Frame.__init__(self, parent)
-		self.parent = parent
-
-		self.base_path = locations.os.path.dirname(locations.os.path.realpath(__file__))
-		self.save_path = locations.os.path.join(self.base_path, 'saves')
-		if not locations.os.path.exists(self.save_path):
-			locations.os.makedirs(self.save_path)
-
-		self.heading_font = tkfont.Font(family='Helvetica', size=18, weight='bold')
-		self.button_font = tkfont.Font(family='Helvetica', size=13)
-		self.current_game_font = tkfont.Font(family='Helvetica', size=10, slant='italic')
-
-		self.configure(background = 'blue')
-	
-		self.parent.bind('<Escape>', self.escape_to_menu)
-		
-		self.heading = tk.Label(self, text='Hearthfire', font=self.heading_font)
-		self.heading.pack(side='top', pady=30)
-		self.create_widgets()
-
-	def resume(self):
-		# This might not be kosher by Uncle Bob's 
-		self.parent.bind_game_keys()
-		self.parent.game_screen.player_input.configure(state='normal')
-		self.parent.game_screen.player_input.focus_set()
-
-		self.destroy()
-
-	def quit(self):
-		self.parent.quit()
-
-	def start_new_game(self):
-
-		self.parent.world = locations.World()
-		self.parent.current_game = 'unsaved new game'
-		self.parent.player = locations.people.Player(game=self.parent, name='player', location=self.parent.world.map[(10,10)].map[(5,5)])
-
-		self.resume()
-		self.parent.display_text_output(self.parent.player.location.describe())
-
-	def open_save_menu(self):
-
-		# Still needs "back to main menu" button
-		self.destroy_widgets()
-		self.create_save_menu_widgets()
-		self.save_name_entry.focus_set()
-
-	def save_game(self, event):
-		save_name = self.save_name_entry.get()
-
-		d = shelve.open(self.save_path+'/'+save_name)
-		d['world'] = self.parent.world
-		d['player'] = self.parent.player
-		self.parent.current_game = save_name
-
-		self.destroy_save_menu_widgets()
-		self.create_widgets()
-
-	def open_load_menu(self):
-
-		self.destroy_widgets()
-		self.create_load_game_menu_widgets()
-
-	def load_game(self, event):
-
-		w = event.widget
-		load_name = w.get(int(w.curselection()[0]))
-
-		d = shelve.open(self.save_path+'/'+load_name)
-
-		self.parent.world = d['world']
-		self.parent.player = d['player']
-		setattr(self.parent.player, 'game', self.parent)
-		setattr(self.parent, 'current_game', load_name)
-
-		self.parent.player.show_location()
-		self.destroy_load_game_menu_widgets()
-		self.create_widgets()
-
-	def delete_saved_game(self):
-		
-		self.delete_popup = tk.Toplevel(self)
-		self.delete_popup.title=('Delete game?')
-		delete_popup_message = tk.Message(self.delete_popup, text='You are about to delete your game. The entire world, including your self, will be permanently destroyed. Are you sure you wish to do this?')
-		confirm_delete = tk.Button(self.delete_popup, text='Yes, destroy everything.', command=self.confirm_delete)
-		cancel_delete = tk.Button(self.delete_popup, text='No, I can\'t, I won\'t do it!', command=self.delete_popup.destroy)
-		
-		delete_popup_message.pack()
-		confirm_delete.pack()
-		cancel_delete.pack()
-
-	def confirm_delete(self):
-		index = int(self.saved_games_list.curselection()[0])
-		delete_name = self.saved_games_list.get(index)
-		for file in locations.os.listdir(self.save_path):
-			if file[0:-4] == delete_name:
-				locations.os.remove(self.save_path+'/'+file)
-					
-		self.delete_popup.destroy()
-		self.refresh_saved_games_list()
-
-	def show_game_info(self, event):
-
-		w = event.widget
-		game_name = w.get(int(w.curselection()[0]))
-
-		d = shelve.open(self.save_path+'/'+game_name)
-		load_player = d['player']
-		player_name = load_player.__dict__['name']
-		self.saved_game_info_box.config(text='Player: '+player_name)
-
-	def create_widgets(self):
-
-		self.resume_button = tk.Button(self, text='Resume Game', font=self.button_font, command=lambda: self.resume())
-		self.new_game_button = tk.Button(self, text='New Game', font=self.button_font, command=lambda: self.start_new_game())
-		self.quit_button = tk.Button(self, text='Quit Game', font=self.button_font, command=lambda: self.quit())
-		self.save_button = tk.Button(self, text='Save Game', font=self.button_font, command=lambda: self.open_save_menu())
-		self.load_button = tk.Button(self, text='Load Game', font=self.button_font, command=lambda: self.open_load_menu())
-
-		self.current_game_label = tk.Label(self, text='Current game file: ' + self.parent.current_game, font=self.current_game_font)
-
-		if self.parent.world:
-			self.current_game_label.pack()
-
-		if self.parent.world:
-			self.resume_button.pack(pady=10)
-		if self.parent.world:
-			self.save_button.pack(pady=10)
-		self.new_game_button.pack(pady=10)
-		self.load_button.pack(pady=10)
-		self.quit_button.pack(pady=10)
-
-	def destroy_widgets(self):
-
-		self.resume_button.destroy()
-		self.new_game_button.destroy()
-		self.quit_button.destroy()
-		self.save_button.destroy()
-		self.load_button.destroy()
-		self.current_game_label.destroy()
-
-	def toggle_save_button(self, *args):
-		x = self.saveEntryVar.get()
-		if len(x) > 0:
-			self.save_game_button.config(state='normal')
-		if len(x) == 0:
-			self.save_game_button.config(state='disabled')
-
-	def create_save_menu_widgets(self):
-		self.create_saved_games_list('save')
-
-		self.saveEntryVar = tk.StringVar()
-		self.saveEntryVar.trace('w', self.toggle_save_button)
-		self.save_name_entry = tk.Entry(self, textvariable=self.saveEntryVar)
-		self.save_game_button = tk.Button(self, text='Save Game', command=lambda:self.save_game(event=None))
-
-		# Do lists and for loop to pack
-		self.saved_games_list.pack()
-		self.delete_button.pack()
-		self.saved_game_info_box.pack()
-		self.save_name_entry.pack()
-		self.save_game_button.pack()
-		
-
-	def create_load_game_menu_widgets(self):
-		self.create_saved_games_list('load')
-
-		self.saved_game_info_box.pack()
-		self.saved_games_list.pack()
-		self.delete_button.pack()
-
-	def destroy_save_menu_widgets(self):
-		
-		self.saved_games_list.destroy()
-		self.saved_game_info_box.destroy()
-		self.delete_button.destroy()
-		self.save_name_entry.destroy()
-		self.save_game_button.destroy()
-
-	def destroy_load_game_menu_widgets(self):
-
-		self.saved_games_list.destroy()
-		self.saved_game_info_box.destroy()
-		self.saved_game_info_box.destroy()
-		self.delete_button.destroy()
-
-	def create_saved_games_list(self, mode):
-		self.saved_games_list = tk.Listbox(self)
-		self.saved_game_info_box = tk.Label(self)
-		self.delete_button = tk.Button(self, text='Delete Game', command=self.delete_saved_game)
-		self.refresh_saved_games_list()
-
-		self.saved_games_list.bind('<<ListboxSelect>>', self.show_game_info)
-		if mode == 'load':
-			self.saved_games_list.bind('<Return>', self.load_game)
-			self.saved_games_list.bind('<Double-Button-1>', self.load_game)
-		if mode == 'save':
-			self.saved_games_list.bind('<Return>', self.save_game)
-			self.saved_games_list.bind('<Double-Button-1>', self.save_game)
-			self.saved_games_list.bind('<<ListboxSelect>>', self.enter_selected_game_name)
-
-	def enter_selected_game_name(self, event):
-		w = event.widget # try condensing w
-		game_name = w.get(int(w.curselection()[0]))
-		self.save_name_entry.delete(0, 'end')
-		self.save_name_entry.insert(0, game_name)
-		self.save_name_entry.focus_set() # This isn't working
-
-	
-	def refresh_saved_games_list(self):
-		self.saved_games_list.delete(0, 'end')
-		
-		saves_list = self.get_saves() # try reading directly into loop
-		for s in saves_list:
-			self.saved_games_list.insert('end', s)
-
-	def get_saves(self):
-		saves_list = []
-		for file in locations.os.listdir(self.save_path):
-			if file.endswith('dir'):
-				saves_list.append(file[0:-4])
-		return saves_list
-
-	def return_to_menu(self):
-		# Next two lines of code prevent certain widgets from being refreshed, but seems like a lot of code for this.
-		widgets_to_preserve = [self.heading]
-		for w in [i for i in self.parent.menu.winfo_children() if i not in widgets_to_preserve]:
-			w.destroy()
-		self.create_widgets()
-
-	def escape_to_menu(self, event):
-		self.return_to_menu()
 
 
 class GameScreen(tk.Frame):
@@ -559,7 +377,7 @@ class GameScreen(tk.Frame):
 
 		# Text Panels
 
-		self.text_output = OutputText(self.text_frame, width=105, bg='black', foreground='white', wrap='word', relief='sunken', state='disabled')
+		self.text_output = OutputText(self.text_frame, width=105, bg='black', foreground='#CCCCFF', wrap='word', relief='sunken', state='disabled')
 		self.player_input = tk.Text(self.text_frame, height=2, width=105, bg='black', foreground='white', relief="sunken")
 		self.text_output.pack(expand=True, fill='y')
 		self.player_input.pack()
@@ -569,14 +387,30 @@ class OutputText(tk.Text):
 	def __init__(self, *args, **kwargs):
 		tk.Text.__init__(self, *args, **kwargs)
 
-		# ---- Put tags here ----
+		# self.output_font = tkfont.Font('system', 8)
+		# self.configure(font=self.output_font)
+
+		# ---- Tags ----
 
 		self.tag_configure('red', foreground='#ff0000')
+		self.tag_configure('orange-red', foreground='#FF4500')
+		self.tag_configure('dark-turquoise', foreground='#2C7B80')
+		self.tag_configure('light-turquoise', foreground='#3FB1B7')
+		self.tag_configure('salmon', foreground='#D76565')
+		self.tag_configure('light-salmon', foreground='#6B3232')
+		self.tag_configure('teal', foreground='#01B8AA')
+		self.tag_configure('mudfish', foreground='#2E3A22')
+		self.tag_configure('light-mudfish', foreground='#12170D')
+		self.tag_configure('light-lavender', foreground='#9797FF')
+		self.tag_configure('vanilla', foreground='#fff68f')
+		self.tag_configure('overcast', foreground='#939FAB')
+		self.tag_configure('cocoa', foreground='#3E2323')
+		self.tag_configure('blood', foreground='#6D0F0F')
+		self.tag_configure('lavender-blue', foreground='#CCCCFF')
+		self.tag_configure('light-brown', foreground='#AB9481')
+		self.tag_configure('muted-purple', foreground='#6F404B')
 
-	def display_output(self, text):
-		pass
-
-	def highlight_pattern(self, pattern, tag, start='1.0', end='end', regexp=False):
+	def apply_tag_to_pattern(self, pattern, tag, start='1.0', end='end', regexp=False):
 
 		start = self.index(start)
 		end = self.index(end)
